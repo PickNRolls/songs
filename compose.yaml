@@ -1,0 +1,37 @@
+services:
+  server:
+    build:
+      context: .
+      target: final
+    secrets:
+      - db-password
+    env_file: .env
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    ports:
+      - 8080:8080
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    build:
+      context: ./postgres_image
+    restart: always
+    user: postgres
+    secrets:
+      - db-password
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    env_file: .env
+    expose:
+      - 5432
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+secrets:
+  db-password:
+    file: db-password.txt
+
